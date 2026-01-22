@@ -11,14 +11,12 @@ public class Dashboard extends JFrame{
         setContentPane(dashPanel);
         setVisible(true);
 
-        setContentPane(new Canvas());
-
         setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
-    public void changeContentPanel(JPanel panel) {
+    public void reDrawCanvas(JPanel panel) {
         contentPanel.removeAll();
         contentPanel.setLayout(new BorderLayout());
         contentPanel.add(panel, BorderLayout.CENTER);
