@@ -1,22 +1,24 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class Dashboard extends JFrame{
-    private JPanel dashPanel;
+public class Painter extends JFrame{
+    private JPanel painterPanel;
     private JPanel contentPanel;
 
 
-    public Dashboard() {
+    public Painter() {
         setSize(800, 600);
-        setContentPane(dashPanel);
+        setContentPane(painterPanel);
         setVisible(true);
+
+        setTitle("Graphics Test");
 
         setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
-    public void reDrawCanvas(JPanel panel) {
+    public void drawCanvas(JPanel panel) {
         contentPanel.removeAll();
         contentPanel.setLayout(new BorderLayout());
         contentPanel.add(panel, BorderLayout.CENTER);

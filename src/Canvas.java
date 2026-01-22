@@ -7,6 +7,9 @@ public class Canvas extends JPanel{
     private ArrayList<Point> points = new ArrayList<>();
     private final int POINT_SIZE = 20;
 
+    public Canvas() {
+        setBackground(Color.GRAY);
+    }
 
     @Override
     protected void paintComponent(Graphics g){
@@ -18,12 +21,15 @@ public class Canvas extends JPanel{
         }
     }
 
-    private int getScreenY(Point point) {
-        return ((Canvas.this.getHeight()/2) - point.getY()) - 10;
+    private int getScreenX(Point point) {
+        // projects the point into the plane of the screen and then shifts its coordinates
+        // to the coordinates of the screen
+        return Math.round((((float) Canvas.this.getWidth() /2) + point.getX()/(point.getZ()/100)) - (float) POINT_SIZE /2);
     }
 
-    private int getScreenX(Point point) {
-        return ((Canvas.this.getWidth()/2) + point.getX()) - 10;
+    private int getScreenY(Point point) {
+        // same as X but Y is inverted because screen axis is negative
+        return Math.round((((float) Canvas.this.getHeight() /2) - point.getY()/(point.getZ()/100)) - (float) POINT_SIZE /2);
     }
 
     public ArrayList<Point> getPoints() {
