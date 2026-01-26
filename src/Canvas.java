@@ -1,52 +1,38 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
 
 public class Canvas extends JPanel{
     private JPanel canvasPanel;
-    private ArrayList<Point> points = new ArrayList<>();
-    private final int POINT_SIZE = 20;
+    private Mesh mesh;
 
-    public Canvas() {
+    public Canvas(Mesh mesh) {
         setBackground(Color.GRAY);
+        this.mesh = mesh;
     }
 
     @Override
     protected void paintComponent(Graphics g){
         super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
 
-        g.setColor(Color.BLUE);
-        for (Point point: points){
-            g.fillRect(getScreenX(point), getScreenY(point), POINT_SIZE, POINT_SIZE);
+        g2.setColor(Color.black);
+        g2.fillRect(0,0,getWidth(), getHeight());
+
+        renderMesh(g2);
+    }
+
+    public void renderMesh(Graphics2D g2){
+        g2.translate(getWidth() / 2, getHeight() / 2);
+        g2.setColor(Color.WHITE);
+        for (Triangle t : mesh.getTris()) {
+            Path2D path = new Path2D.Double();
+            path.moveTo(t.v1.getX(), t.v1.getY());
+            path.lineTo(t.v2.getX(), t.v2.getY());
+            path.lineTo(t.v3.getX(), t.v3.getY());
+            path.closePath();
+            g2.draw(path);
         }
-    }
-
-    private int getScreenX(Point point) {
-        // projects the point into the plane of the screen and then shifts its coordinates
-        // to the coordinates of the screen
-        return Math.round((((float) Canvas.this.getWidth() /2) + point.getX()/(point.getZ()/100)) - (float) POINT_SIZE /2);
-    }
-
-    private int getScreenY(Point point) {
-        // same as X but Y is inverted because screen axis is negative
-        return Math.round((((float) Canvas.this.getHeight() /2) - point.getY()/(point.getZ()/100)) - (float) POINT_SIZE /2);
-    }
-
-    public ArrayList<Point> getPoints() {
-        return points;
-    }
-
-    public void addPoint(Point point){
-        if (!points.contains(point)){
-            points.add(point);
-        }
-    }
-
-    public void removePoint(Point point){
-        points.remove(point);
-    }
-
-    public void setPoints(ArrayList<Point> points) {
-        this.points = points;
     }
 }

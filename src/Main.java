@@ -1,24 +1,29 @@
-private final int FPS = 60;
+import java.awt.*;
 
-void main() throws InterruptedException {
-    Painter painter = new Painter();
-    Canvas canvas = new Canvas();
+void main(){
+    Container container = new Container();
 
-    float dt =  (float) 1 / FPS;
-    float dz = 0;
+    ArrayList<Triangle> tris = new ArrayList<>();
+    tris.add(new Triangle(new Vertex(100, 100, 100, 1),
+            new Vertex(-100, -100, 100, 1),
+            new Vertex(-100, 100, -100, 1),
+            Color.WHITE));
+    tris.add(new Triangle(new Vertex(100, 100, 100, 1),
+            new Vertex(-100, -100, 100, 1),
+            new Vertex(100, -100, -100, 1),
+            Color.RED));
+    tris.add(new Triangle(new Vertex(-100, 100, -100, 1),
+            new Vertex(100, -100, -100, 1),
+            new Vertex(100, 100, 100, 1),
+            Color.GREEN));
+    tris.add(new Triangle(new Vertex(-100, 100, -100, 1),
+            new Vertex(100, -100, -100, 1),
+            new Vertex(-100, -100, 100, 1),
+            Color.BLUE));
 
-    canvas.addPoint(new Point(100, 100, 100));
-    canvas.addPoint(new Point(-100, 100, 100));
-    canvas.addPoint(new Point(100, -100, 100));
-    canvas.addPoint(new Point(-100, -100, 100));
+    Mesh mesh = new Mesh(tris);
 
-    // main loop
-    while (true){
-        dz += 1*dt;
-        for(Point point: canvas.getPoints()){
-            point.setZ(point.getZ() + dz);
-        }
-        painter.drawCanvas(canvas);
-        Thread.sleep(1000/FPS);
-    }
+    Canvas canvas = new Canvas(mesh);
+
+    container.drawCanvas(canvas);
 }

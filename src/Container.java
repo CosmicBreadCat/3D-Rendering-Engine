@@ -1,14 +1,14 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class Painter extends JFrame{
-    private JPanel painterPanel;
+public class Container extends JFrame{
+    private JPanel containerPanel;
     private JPanel contentPanel;
 
 
-    public Painter() {
-        setSize(800, 600);
-        setContentPane(painterPanel);
+    public Container() {
+        setSize(600, 600);
+        setContentPane(containerPanel);
         setVisible(true);
 
         setTitle("Graphics Test");
