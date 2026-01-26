@@ -25,17 +25,29 @@ public class Matrix4 {
         return values[id];
     }
 
-    public Matrix4 multiply(Matrix4 B){
+    public Matrix4 multiply(Matrix4 B) {
         Matrix4 output = new Matrix4();
+
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
+                double sum = 0;
                 for (int k = 0; k < 4; k++) {
-                    double res = values[i*4 + k] * B.getValue(k*4 + j);
-                    output.setValue(i*4+k,res);
+                    sum += values[i*4 + k] * B.getValue(k*4 + j);
                 }
+
+                output.setValue(i*4 + j, sum);
             }
         }
+
         return output;
+    }
+
+    public Vertex multiply(Vertex v){
+        return new Vertex(
+                v.getX()*values[0] + v.getY()*values[4] + v.getZ()*values[8] + v.getW()*values[12],
+                v.getX()*values[1] + v.getY()*values[5] + v.getZ()*values[9] + v.getW()*values[13],
+                v.getX()*values[2] + v.getY()*values[6] + v.getZ()*values[10] + v.getW()*values[14],
+                v.getX()*values[3] + v.getY()*values[7] + v.getZ()*values[11] + v.getW()*values[15]);
     }
 
     public static Matrix4 createTranslationMatrix(double transX, double transY, double transZ){
