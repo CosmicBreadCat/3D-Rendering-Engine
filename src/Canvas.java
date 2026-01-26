@@ -28,9 +28,9 @@ public class Canvas extends JPanel{
         g2.setColor(Color.WHITE);
         for (Triangle t : mesh.getTris()) {
             Path2D path = new Path2D.Double();
-            path.moveTo(t.v1.getX(), t.v1.getY());
-            path.lineTo(t.v2.getX(), t.v2.getY());
-            path.lineTo(t.v3.getX(), t.v3.getY());
+            path.moveTo(t.getV1().getX(), t.getV1().getY());
+            path.lineTo(t.getV2().getX(), t.getV2().getY());
+            path.lineTo(t.getV3().getX(), t.getV3().getY());
             path.closePath();
             g2.draw(path);
         }

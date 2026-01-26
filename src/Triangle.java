@@ -1,7 +1,7 @@
 import java.awt.*;
 
 public class Triangle {
-    Vertex v1, v2, v3;
+    private Vertex v1, v2, v3;
     Color color;
 
     public Triangle(Vertex v1, Vertex v2, Vertex v3, Color color) {
