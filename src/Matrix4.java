@@ -42,12 +42,13 @@ public class Matrix4 {
         return output;
     }
 
-    public Vertex multiply(Vertex v){
+    public Vertex multiply(Vertex v) {
         return new Vertex(
-                v.getX()*values[0] + v.getY()*values[4] + v.getZ()*values[8] + v.getW()*values[12],
-                v.getX()*values[1] + v.getY()*values[5] + v.getZ()*values[9] + v.getW()*values[13],
-                v.getX()*values[2] + v.getY()*values[6] + v.getZ()*values[10] + v.getW()*values[14],
-                v.getX()*values[3] + v.getY()*values[7] + v.getZ()*values[11] + v.getW()*values[15]);
+                v.getX()*values[0] + v.getY()*values[1] + v.getZ()*values[2] + v.getW()*values[3],
+                v.getX()*values[4] + v.getY()*values[5] + v.getZ()*values[6] + v.getW()*values[7],
+                v.getX()*values[8] + v.getY()*values[9] + v.getZ()*values[10] + v.getW()*values[11],
+                v.getX()*values[12] + v.getY()*values[13] + v.getZ()*values[14] + v.getW()*values[15]
+        );
     }
 
     public static Matrix4 createTranslationMatrix(double transX, double transY, double transZ){
