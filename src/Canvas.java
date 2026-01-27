@@ -7,6 +7,8 @@ public class Canvas extends JPanel{
     private JPanel canvasPanel;
     private final Mesh mesh;
     int rotX = 0, rotY = 0, rotZ = 0;
+    boolean showWireFrame = false;
+    private BufferedImage img = null;
 
     public Canvas(Mesh mesh) {
         setBackground(Color.GRAY);
@@ -35,7 +37,14 @@ public class Canvas extends JPanel{
 
         Matrix4 model = rotX.multiply(rotY.multiply(rotZ));
 
-        BufferedImage img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        if (showWireFrame){
+            renderWireFrame(g2, model);
+        }else {
+            renderSolid(g2, model);
+        }
+    }
+
+    private void renderWireFrame(Graphics2D g2,Matrix4 model){
         for (Triangle tri : mesh.getTris()) {
             Vertex v1 = model.multiply(tri.getV1());
             Vertex v2 = model.multiply(tri.getV2());
@@ -48,6 +57,67 @@ public class Canvas extends JPanel{
             path.closePath();
             g2.draw(path);
         }
+    }
+
+    private void renderSolid(Graphics2D g2, Matrix4 model){
+
+        //clear image
+        if(img == null || img.getWidth() != getWidth() || img.getHeight() != getHeight()){
+            img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+        }else {
+            for (int i = 0; i < img.getWidth(); i++) {
+                for (int j = 0; j < getHeight(); j++) {
+                    img.setRGB(i, j, Color.BLACK.getRGB());
+                }
+            }
+        }
+
+        for (Triangle tri : mesh.getTris()) {
+            Vertex v1 = model.multiply(tri.getV1());
+            Vertex v2 = model.multiply(tri.getV2());
+            Vertex v3 = model.multiply(tri.getV3());
+
+            rasterizeTriangle(g2, v1, v2, v3, tri.getColor());
+        }
+        g2.drawImage(img, 0, 0, null);
+    }
+
+    private void rasterizeTriangle(Graphics2D g2, Vertex v1, Vertex v2, Vertex v3, Color color) {
+        int width = getWidth();
+        int height = getHeight();
+
+        int minX = (int) Math.min(Math.min(v1.getX(), v2.getX()), v3.getX());
+        minX = Math.max(0, minX);
+        int maxX = (int) Math.max(Math.max(v1.getX(), v2.getX()), v3.getX());
+        maxX = Math.min(width, maxX);
+
+        int minY = (int) Math.min(Math.min(v1.getY(), v2.getY()), v3.getY());
+        minY = Math.max(0, minY);
+        int maxY = (int) Math.max(Math.max(v1.getY(), v2.getY()), v3.getY());
+        maxY = Math.min(height, maxY);
+
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                double[] baryCoords = barycentricCoordinates(x, y, v1, v2, v3);
+                if (isNegative(baryCoords)) continue;
+
+                img.setRGB(x, y, color.getRGB());
+            }
+        }
+    }
+
+    private double[] barycentricCoordinates(double px, double py, Vertex v1, Vertex v2, Vertex v3) {
+        double  denom = (v2.getY() - v3.getY())*(v1.getX() - v3.getX()) + (v3.getX() - v2.getX())*(v1.getY() - v3.getY());
+
+        if(Math.abs(denom) < 0.0001){
+            return new double[]{-1,-1,-1};
+        }
+
+        double w1 = ((v2.getY() - v3.getY())*(px - v3.getX()) + (v3.getX() - v2.getX())*(py - v3.getY())) / denom;
+        double w2 = ((v3.getY() - v1.getY())*(px - v3.getX()) + (v1.getX() - v3.getX())*(py - v3.getY())) / denom;
+        double w3 = 1 - w1 - w2;
+
+        return new double[]{w1,w2,w3};
     }
 
     public int getRotX() {
@@ -72,5 +142,20 @@ public class Canvas extends JPanel{
 
     public void setRotZ(int rotZ) {
         this.rotZ = rotZ;
+    }
+
+    public boolean isShowWireFrame() {
+        return showWireFrame;
+    }
+
+    public void setShowWireFrame(boolean showWireFrame) {
+        this.showWireFrame = showWireFrame;
+    }
+
+    public static boolean isNegative(double[] arr) {
+        for (double num : arr) {
+            if (num < 0) return true;
+        }
+        return false;
     }
 }

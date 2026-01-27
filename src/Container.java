@@ -32,7 +32,7 @@ public class Container extends JFrame{
     }
 
     private void generateScrollComponents(){
-        scrollPanel.setLayout(new GridLayout(3,1));
+        scrollPanel.setLayout(new GridLayout(10,1));
 
         JPanel rotXPanel = new JPanel(new GridLayout(2,1));
         rotXPanel.add(new JLabel("X Rotation"));
@@ -40,13 +40,10 @@ public class Container extends JFrame{
         rotXSlider.setMajorTickSpacing(90);
         rotXSlider.setPaintTicks(true);
         rotXSlider.setPaintLabels(true);
-        rotXSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                canvas.setRotX(rotXSlider.getValue());
-                canvas.repaint();
-                canvas.revalidate();
-            }
+        rotXSlider.addChangeListener(e -> {
+            canvas.setRotX(rotXSlider.getValue());
+            canvas.repaint();
+            canvas.revalidate();
         });
         rotXPanel.add(rotXSlider);
         scrollPanel.add(rotXPanel);
@@ -57,13 +54,10 @@ public class Container extends JFrame{
         rotYSlider.setMajorTickSpacing(90);
         rotYSlider.setPaintTicks(true);
         rotYSlider.setPaintLabels(true);
-        rotYSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                canvas.setRotY(rotYSlider.getValue());
-                canvas.repaint();
-                canvas.revalidate();
-            }
+        rotYSlider.addChangeListener(e -> {
+            canvas.setRotY(rotYSlider.getValue());
+            canvas.repaint();
+            canvas.revalidate();
         });
         rotYPanel.add(rotYSlider);
         scrollPanel.add(rotYPanel);
@@ -74,15 +68,22 @@ public class Container extends JFrame{
         rotZSlider.setMajorTickSpacing(90);
         rotZSlider.setPaintTicks(true);
         rotZSlider.setPaintLabels(true);
-        rotZSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                canvas.setRotZ(rotZSlider.getValue());
-                canvas.repaint();
-                canvas.revalidate();
-            }
+        rotZSlider.addChangeListener(e -> {
+            canvas.setRotZ(rotZSlider.getValue());
+            canvas.repaint();
+            canvas.revalidate();
         });
         rotZPanel.add(rotZSlider);
         scrollPanel.add(rotZPanel);
+
+        JPanel wireFramePanel = new JPanel(new GridBagLayout());
+        JButton wireFrameButton = new JButton("Enable WireFrame");
+        wireFrameButton.addActionListener(e -> {
+            canvas.setShowWireFrame(!canvas.isShowWireFrame());
+            canvas.repaint();
+            canvas.revalidate();
+        });
+        wireFramePanel.add(wireFrameButton);
+        scrollPanel.add(wireFramePanel);
     }
 }
