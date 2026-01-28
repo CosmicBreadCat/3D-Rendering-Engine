@@ -7,8 +7,8 @@ import java.util.Arrays;
 public class Canvas extends JPanel{
     private JPanel canvasPanel;
     private final Mesh mesh;
-    int rotX = 0, rotY = 0, rotZ = 0;
-    boolean showWireFrame = false;
+    private int rotX = 0, rotY = 0, rotZ = 0;
+    private boolean showWireFrame = false;
     private BufferedImage img = null;
 
     public Canvas(Mesh mesh) {
@@ -80,9 +80,28 @@ public class Canvas extends JPanel{
             Vertex v2 = model.multiply(tri.getV2());
             Vertex v3 = model.multiply(tri.getV3());
 
+            if (shouldCullTriangle(v1, v2, v3)) continue;
+
             rasterizeTriangle(g2, zBuffer, v1, v2, v3, tri.getColor());
         }
         g2.drawImage(img, 0, 0, null);
+    }
+
+    private boolean shouldCullTriangle(Vertex v1, Vertex v2, Vertex v3){
+        Vertex edge1 = new Vertex(v2.getX()-v1.getX(), v2.getY()-v1.getY(), v2.getZ()-v1.getZ(), 1);
+        Vertex edge2 = new Vertex(v3.getX()-v1.getX(), v3.getY()-v1.getY(), v3.getZ()-v1.getZ(), 1);
+
+        double normalX = edge1.getY() * edge2.getZ() - edge1.getZ() * edge2.getY();
+        double normalY = edge1.getZ() * edge2.getX() - edge1.getX() * edge2.getZ();
+        double normalZ = edge1.getX() * edge2.getY() - edge1.getY() * edge2.getX();
+
+        double viewX = v1.getX();
+        double viewY = v1.getY();
+        double viewZ = v1.getZ();
+
+        double dotProd = normalX * viewX + normalY * viewY + normalZ * viewZ;
+
+        return dotProd < 0;
     }
 
     private void rasterizeTriangle(Graphics2D g2, double[][] zBuffer, Vertex v1, Vertex v2, Vertex v3, Color color) {
