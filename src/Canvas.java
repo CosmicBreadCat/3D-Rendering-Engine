@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 public class Canvas extends JPanel{
     private JPanel canvasPanel;
@@ -60,7 +61,6 @@ public class Canvas extends JPanel{
     }
 
     private void renderSolid(Graphics2D g2, Matrix4 model){
-
         //clear image
         if(img == null || img.getWidth() != getWidth() || img.getHeight() != getHeight()){
             img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -72,17 +72,20 @@ public class Canvas extends JPanel{
             }
         }
 
+        double[][] zBuffer = new double[getHeight()][getWidth()];
+        Arrays.stream(zBuffer).forEach(y -> Arrays.fill(y, Double.POSITIVE_INFINITY));
+
         for (Triangle tri : mesh.getTris()) {
             Vertex v1 = model.multiply(tri.getV1());
             Vertex v2 = model.multiply(tri.getV2());
             Vertex v3 = model.multiply(tri.getV3());
 
-            rasterizeTriangle(g2, v1, v2, v3, tri.getColor());
+            rasterizeTriangle(g2, zBuffer, v1, v2, v3, tri.getColor());
         }
         g2.drawImage(img, 0, 0, null);
     }
 
-    private void rasterizeTriangle(Graphics2D g2, Vertex v1, Vertex v2, Vertex v3, Color color) {
+    private void rasterizeTriangle(Graphics2D g2, double[][] zBuffer, Vertex v1, Vertex v2, Vertex v3, Color color) {
         int width = getWidth();
         int height = getHeight();
 
@@ -100,8 +103,13 @@ public class Canvas extends JPanel{
             for (int x = minX; x <= maxX; x++) {
                 double[] baryCoords = barycentricCoordinates(x, y, v1, v2, v3);
                 if (isNegative(baryCoords)) continue;
+                int shiftedX = x+width/2, shiftedY = y+height/2;
+                double depth = v1.getZ()*baryCoords[0] + v2.getZ()*baryCoords[1] + v3.getZ()*baryCoords[2];
 
-                img.setRGB(x+width/2, y+height/2, color.getRGB());
+                if (depth < zBuffer[shiftedY][shiftedX]){
+                    zBuffer[shiftedY][shiftedX] = depth;
+                    img.setRGB(shiftedX, shiftedY, color.getRGB());
+                }
             }
         }
     }
