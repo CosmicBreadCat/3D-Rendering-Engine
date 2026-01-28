@@ -35,7 +35,7 @@ public class Canvas extends JPanel{
         Matrix4 rotY = Matrix4.createYRotationMatrix(this.rotY);
         Matrix4 rotZ = Matrix4.createZRotationMatrix(this.rotZ);
 
-        Matrix4 model = rotX.multiply(rotY.multiply(rotZ));
+        Matrix4 model = rotX.multiply(rotY.multiply(rotZ.multiply(Matrix4.createScalingMatrix(100,100,100))));
 
         if (showWireFrame){
             renderWireFrame(g2, model);
@@ -80,7 +80,7 @@ public class Canvas extends JPanel{
             Vertex v2 = model.multiply(tri.getV2());
             Vertex v3 = model.multiply(tri.getV3());
 
-            if (shouldCullTriangle(v1, v2, v3)) continue;
+//            if (shouldCullTriangle(v1, v2, v3)) continue;
 
             rasterizeTriangle(g2, zBuffer, v1, v2, v3, tri.getColor());
         }

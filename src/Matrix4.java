@@ -59,10 +59,10 @@ public class Matrix4 {
         return output;
     }
 
-    public static Matrix4 createScalingMatrix(double transX, double transY, double scaleZ){
+    public static Matrix4 createScalingMatrix(double scaleX, double scaleY, double scaleZ){
         Matrix4 output = new Matrix4();
-        output.setValue(0, transX);
-        output.setValue(5, transY);
+        output.setValue(0, scaleX);
+        output.setValue(5, scaleY);
         output.setValue(10, scaleZ);
         return output;
     }
