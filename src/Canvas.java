@@ -28,7 +28,6 @@ public class Canvas extends JPanel{
     }
 
     public void renderMesh(Graphics2D g2) {
-        g2.translate(getWidth() / 2, getHeight() / 2);
         g2.setColor(Color.WHITE);
 
         Matrix4 rotX = Matrix4.createXRotationMatrix(this.rotX);
@@ -45,6 +44,7 @@ public class Canvas extends JPanel{
     }
 
     private void renderWireFrame(Graphics2D g2,Matrix4 model){
+        g2.translate(getWidth() / 2, getHeight() / 2);
         for (Triangle tri : mesh.getTris()) {
             Vertex v1 = model.multiply(tri.getV1());
             Vertex v2 = model.multiply(tri.getV2());
@@ -87,21 +87,21 @@ public class Canvas extends JPanel{
         int height = getHeight();
 
         int minX = (int) Math.min(Math.min(v1.getX(), v2.getX()), v3.getX());
-        minX = Math.max(0, minX);
+        minX = Math.max(-width/2, minX);
         int maxX = (int) Math.max(Math.max(v1.getX(), v2.getX()), v3.getX());
-        maxX = Math.min(width, maxX);
+        maxX = Math.min(width/2, maxX);
 
         int minY = (int) Math.min(Math.min(v1.getY(), v2.getY()), v3.getY());
-        minY = Math.max(0, minY);
+        minY = Math.max(-height/2, minY);
         int maxY = (int) Math.max(Math.max(v1.getY(), v2.getY()), v3.getY());
-        maxY = Math.min(height, maxY);
+        maxY = Math.min(height/2, maxY);
 
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 double[] baryCoords = barycentricCoordinates(x, y, v1, v2, v3);
                 if (isNegative(baryCoords)) continue;
 
-                img.setRGB(x, y, color.getRGB());
+                img.setRGB(x+width/2, y+height/2, color.getRGB());
             }
         }
     }
