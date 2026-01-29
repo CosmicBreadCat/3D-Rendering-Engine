@@ -122,7 +122,7 @@ public class Canvas extends JPanel{
 
         double dotProd = normalX * viewX + normalY * viewY + normalZ * viewZ;
 
-        return dotProd < 0;
+        return dotProd > 0;
     }
 
     private void rasterizeTriangle(Graphics2D g2, double[][] zBuffer, Vertex v1, Vertex v2, Vertex v3, Color color) {
