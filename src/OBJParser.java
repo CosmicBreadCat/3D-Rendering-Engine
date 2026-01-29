@@ -26,7 +26,7 @@ public class OBJParser {
                         Vertex v1 = vertices.get(Integer.parseInt(split[1].split("/")[0]) - 1);
                         Vertex v2 = vertices.get(Integer.parseInt(split[2].split("/")[0]) - 1);
                         Vertex v3 = vertices.get(Integer.parseInt(split[3].split("/")[0]) - 1);
-                        Color randomColor = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+                        Color randomColor = new Color(rand.nextFloat(0.2f,1.0f), rand.nextFloat(0.2f,1.0f), rand.nextFloat(0.2f,1.0f));
                         triangles.add(new Triangle(v1,v2,v3, randomColor));
                         break;
                 }

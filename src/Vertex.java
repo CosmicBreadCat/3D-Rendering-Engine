@@ -8,6 +8,31 @@ public class Vertex {
         this.w = w;
     }
 
+    public Vertex cross(Vertex v){
+        double cX = y * v.getZ() - z * v.getY();
+        double cY = z * v.getX() - x * v.getZ();
+        double cZ = x * v.getY() - y * v.getX();
+
+        return new Vertex(cX, cY, cZ, 1);
+    }
+
+    public Vertex normalize(){
+        double mag = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+        return new Vertex(x/mag, y/mag, z/mag, 1);
+    }
+
+    public double dot(Vertex v){
+        return x*v.getX() + y*v.getY() + z*v.getZ();
+    }
+
+    public Vertex subtract(Vertex v){
+        return new Vertex(x - v.getX(), y - v.getY(), z - v.getZ(), 1);
+    }
+
+    public Vertex add(Vertex v){
+        return new Vertex(x + v.getX(), y + v.getY(), z + v.getZ(), 1);
+    }
+
     public double getX() {
         return x;
     }

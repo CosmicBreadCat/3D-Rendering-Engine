@@ -7,14 +7,16 @@ import java.util.Arrays;
 public class Canvas extends JPanel{
     private JPanel canvasPanel;
     private final Mesh mesh;
+    private final Camera camera;
     private int rotX = 0, rotY = 0, rotZ = 0;
     private boolean showWireFrame = false;
     private BufferedImage img = null;
 
-    public Canvas(Mesh mesh) {
+    public Canvas(Mesh mesh, Camera camera) {
         setBackground(Color.GRAY);
 
         this.mesh = mesh;
+        this.camera = camera;
     }
 
     @Override
@@ -31,25 +33,38 @@ public class Canvas extends JPanel{
     public void renderMesh(Graphics2D g2) {
         g2.setColor(Color.WHITE);
 
+        Matrix4 trans = Matrix4.createTranslationMatrix(0,0,-0.2);
         Matrix4 rotX = Matrix4.createXRotationMatrix(this.rotX);
         Matrix4 rotY = Matrix4.createYRotationMatrix(this.rotY);
         Matrix4 rotZ = Matrix4.createZRotationMatrix(this.rotZ);
+        Matrix4 scale = Matrix4.createScalingMatrix(1,1,1);
 
-        Matrix4 model = rotX.multiply(rotY.multiply(rotZ.multiply(Matrix4.createScalingMatrix(100,100,100))));
+        Matrix4 model = trans.multiply(rotX.multiply(rotY.multiply(rotZ.multiply(scale))));
+
+        Matrix4 view = camera.getViewMatrix();
+        Matrix4 projection = camera.getProjectionMatrix((double) getWidth() /getHeight());
+
+        Matrix4 MVP = projection.multiply(view.multiply(model));
 
         if (showWireFrame){
-            renderWireFrame(g2, model);
+            renderWireFrame(g2, MVP);
         }else {
-            renderSolid(g2, model);
+            renderSolid(g2, MVP);
         }
     }
 
-    private void renderWireFrame(Graphics2D g2,Matrix4 model){
-        g2.translate(getWidth() / 2, getHeight() / 2);
+    private void renderWireFrame(Graphics2D g2,Matrix4 MVP){
         for (Triangle tri : mesh.getTris()) {
-            Vertex v1 = model.multiply(tri.getV1());
-            Vertex v2 = model.multiply(tri.getV2());
-            Vertex v3 = model.multiply(tri.getV3());
+            Vertex v1 = MVP.multiply(tri.getV1());
+            v1 = new Vertex(v1.getX()/v1.getW(), v1.getY()/v1.getW(), v1.getZ()/v1.getW(), 1);
+            Vertex v2 = MVP.multiply(tri.getV2());
+            v2 = new Vertex(v2.getX()/v2.getW(), v2.getY()/v2.getW(), v2.getZ()/v2.getW(), 1);
+            Vertex v3 = MVP.multiply(tri.getV3());
+            v3 = new Vertex(v3.getX()/v3.getW(), v3.getY()/v3.getW(), v3.getZ()/v3.getW(), 1);
+
+            v1 = new Vertex(v1.getX() * getWidth()/2 + (double) getWidth() /2, v1.getY() * getHeight()/2 + (double) getHeight() /2, v1.getZ(), 1);
+            v2 = new Vertex(v2.getX() * getWidth()/2 + (double) getWidth() /2, v2.getY() * getHeight()/2 + (double) getHeight() /2, v2.getZ(), 1);
+            v3 = new Vertex(v3.getX() * getWidth()/2 + (double) getWidth() /2, v3.getY() * getHeight()/2 + (double) getHeight() /2, v3.getZ(), 1);
 
             Path2D path = new Path2D.Double();
             path.moveTo(v1.getX(), v1.getY());
@@ -60,7 +75,7 @@ public class Canvas extends JPanel{
         }
     }
 
-    private void renderSolid(Graphics2D g2, Matrix4 model){
+    private void renderSolid(Graphics2D g2, Matrix4 MVP){
         //clear image
         if(img == null || img.getWidth() != getWidth() || img.getHeight() != getHeight()){
             img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -76,11 +91,18 @@ public class Canvas extends JPanel{
         Arrays.stream(zBuffer).forEach(y -> Arrays.fill(y, Double.POSITIVE_INFINITY));
 
         for (Triangle tri : mesh.getTris()) {
-            Vertex v1 = model.multiply(tri.getV1());
-            Vertex v2 = model.multiply(tri.getV2());
-            Vertex v3 = model.multiply(tri.getV3());
+            Vertex v1 = MVP.multiply(tri.getV1());
+            v1 = new Vertex(v1.getX()/v1.getW(), v1.getY()/v1.getW(), v1.getZ()/v1.getW(), 1);
+            Vertex v2 = MVP.multiply(tri.getV2());
+            v2 = new Vertex(v2.getX()/v2.getW(), v2.getY()/v2.getW(), v2.getZ()/v2.getW(), 1);
+            Vertex v3 = MVP.multiply(tri.getV3());
+            v3 = new Vertex(v3.getX()/v3.getW(), v3.getY()/v3.getW(), v3.getZ()/v3.getW(), 1);
 
-//            if (shouldCullTriangle(v1, v2, v3)) continue;
+            v1 = new Vertex(v1.getX() * getWidth()/2 + (double) getWidth() /2, v1.getY() * getHeight()/2 + (double) getHeight() /2, v1.getZ(), 1);
+            v2 = new Vertex(v2.getX() * getWidth()/2 + (double) getWidth() /2, v2.getY() * getHeight()/2 + (double) getHeight() /2, v2.getZ(), 1);
+            v3 = new Vertex(v3.getX() * getWidth()/2 + (double) getWidth() /2, v3.getY() * getHeight()/2 + (double) getHeight() /2, v3.getZ(), 1);
+
+            if (shouldCullTriangle(v1, v2, v3)) continue;
 
             rasterizeTriangle(g2, zBuffer, v1, v2, v3, tri.getColor());
         }
@@ -88,12 +110,11 @@ public class Canvas extends JPanel{
     }
 
     private boolean shouldCullTriangle(Vertex v1, Vertex v2, Vertex v3){
-        Vertex edge1 = new Vertex(v2.getX()-v1.getX(), v2.getY()-v1.getY(), v2.getZ()-v1.getZ(), 1);
-        Vertex edge2 = new Vertex(v3.getX()-v1.getX(), v3.getY()-v1.getY(), v3.getZ()-v1.getZ(), 1);
+        Vertex cross = v2.subtract(v1).cross(v3.subtract(v1));
 
-        double normalX = edge1.getY() * edge2.getZ() - edge1.getZ() * edge2.getY();
-        double normalY = edge1.getZ() * edge2.getX() - edge1.getX() * edge2.getZ();
-        double normalZ = edge1.getX() * edge2.getY() - edge1.getY() * edge2.getX();
+        double normalX = cross.getX();
+        double normalY = cross.getY();
+        double normalZ = cross.getZ();
 
         double viewX = v1.getX();
         double viewY = v1.getY();
@@ -109,25 +130,25 @@ public class Canvas extends JPanel{
         int height = getHeight();
 
         int minX = (int) Math.min(Math.min(v1.getX(), v2.getX()), v3.getX());
-        minX = Math.max(-width/2, minX);
+        minX = Math.max(0, minX);
         int maxX = (int) Math.max(Math.max(v1.getX(), v2.getX()), v3.getX());
-        maxX = Math.min(width/2, maxX);
+        maxX = Math.min(width - 1, maxX);
 
         int minY = (int) Math.min(Math.min(v1.getY(), v2.getY()), v3.getY());
-        minY = Math.max(-height/2, minY);
+        minY = Math.max(0, minY);
         int maxY = (int) Math.max(Math.max(v1.getY(), v2.getY()), v3.getY());
-        maxY = Math.min(height/2, maxY);
+        maxY = Math.min(height - 1, maxY);
 
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 double[] baryCoords = barycentricCoordinates(x, y, v1, v2, v3);
                 if (isNegative(baryCoords)) continue;
-                int shiftedX = x+width/2, shiftedY = y+height/2;
+
                 double depth = v1.getZ()*baryCoords[0] + v2.getZ()*baryCoords[1] + v3.getZ()*baryCoords[2];
 
-                if (depth < zBuffer[shiftedY][shiftedX]){
-                    zBuffer[shiftedY][shiftedX] = depth;
-                    img.setRGB(shiftedX, shiftedY, color.getRGB());
+                if (depth < zBuffer[y][x]){
+                    zBuffer[y][x] = depth;
+                    img.setRGB(x, y, color.getRGB());
                 }
             }
         }
