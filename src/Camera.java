@@ -1,10 +1,8 @@
-import java.util.Arrays;
-
 public class Camera {
-    Vertex location, look, worldUp;
+    Vector4 location, look, worldUp;
     double fov, near, far;
 
-    public Camera(Vertex location, Vertex look, Vertex up, double fov, double near, double far) {
+    public Camera(Vector4 location, Vector4 look, Vector4 up, double fov, double near, double far) {
         this.location = location;
         this.look = look;
         this.worldUp = up;
@@ -16,10 +14,10 @@ public class Camera {
     public Matrix4 getViewMatrix(){
         Matrix4 view = new Matrix4();
 
-        Vertex forward = location.subtract(look);
+        Vector4 forward = location.subtract(look);
         forward = forward.normalize();
-        Vertex right = worldUp.cross(forward).normalize();
-        Vertex up = forward.cross(right);
+        Vector4 right = worldUp.cross(forward).normalize();
+        Vector4 up = forward.cross(right);
 
         view.setValue(0, right.getX());
         view.setValue(1, right.getY());
@@ -51,27 +49,27 @@ public class Camera {
         return projection;
     }
 
-    public Vertex getLocation() {
+    public Vector4 getLocation() {
         return location;
     }
 
-    public void setLocation(Vertex location) {
+    public void setLocation(Vector4 location) {
         this.location = location;
     }
 
-    public Vertex getLook() {
+    public Vector4 getLook() {
         return look;
     }
 
-    public Vertex getWorldUp() {
+    public Vector4 getWorldUp() {
         return worldUp;
     }
 
-    public void setWorldUp(Vertex worldUp) {
+    public void setWorldUp(Vector4 worldUp) {
         this.worldUp = worldUp;
     }
 
-    public void setLook(Vertex look) {
+    public void setLook(Vector4 look) {
         this.look = look;
     }
 

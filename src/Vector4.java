@@ -1,36 +1,36 @@
-public class Vertex {
+public class Vector4 {
     private double x, y, z, w;
 
-    public Vertex(double x, double y, double z, double w){
+    public Vector4(double x, double y, double z, double w){
         this.x = x;
         this.y = y;
         this.z = z;
         this.w = w;
     }
 
-    public Vertex cross(Vertex v){
+    public Vector4 cross(Vector4 v){
         double cX = y * v.getZ() - z * v.getY();
         double cY = z * v.getX() - x * v.getZ();
         double cZ = x * v.getY() - y * v.getX();
 
-        return new Vertex(cX, cY, cZ, 1);
+        return new Vector4(cX, cY, cZ, 1);
     }
 
-    public Vertex normalize(){
+    public Vector4 normalize(){
         double mag = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-        return new Vertex(x/mag, y/mag, z/mag, 1);
+        return new Vector4(x/mag, y/mag, z/mag, 1);
     }
 
-    public double dot(Vertex v){
+    public double dot(Vector4 v){
         return x*v.getX() + y*v.getY() + z*v.getZ();
     }
 
-    public Vertex subtract(Vertex v){
-        return new Vertex(x - v.getX(), y - v.getY(), z - v.getZ(), 1);
+    public Vector4 subtract(Vector4 v){
+        return new Vector4(x - v.getX(), y - v.getY(), z - v.getZ(), 1);
     }
 
-    public Vertex add(Vertex v){
-        return new Vertex(x + v.getX(), y + v.getY(), z + v.getZ(), 1);
+    public Vector4 add(Vector4 v){
+        return new Vector4(x + v.getX(), y + v.getY(), z + v.getZ(), 1);
     }
 
     public double getX() {

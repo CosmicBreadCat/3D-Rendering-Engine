@@ -42,8 +42,8 @@ public class Matrix4 {
         return output;
     }
 
-    public Vertex multiply(Vertex v) {
-        return new Vertex(
+    public Vector4 multiply(Vector4 v) {
+        return new Vector4(
                 v.getX()*values[0] + v.getY()*values[1] + v.getZ()*values[2] + v.getW()*values[3],
                 v.getX()*values[4] + v.getY()*values[5] + v.getZ()*values[6] + v.getW()*values[7],
                 v.getX()*values[8] + v.getY()*values[9] + v.getZ()*values[10] + v.getW()*values[11],
