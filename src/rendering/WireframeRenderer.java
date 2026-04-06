@@ -1,3 +1,12 @@
+package rendering;
+
+import lighting.Light;
+import math.Matrix4;
+import math.Vector4;
+import scene.Camera;
+import scene.Mesh;
+import scene.Triangle;
+
 import java.awt.*;
 import java.awt.geom.Path2D;
 
@@ -8,7 +17,7 @@ public class WireframeRenderer extends Renderer{
     }
 
     @Override
-    public void render(Graphics2D g2, Camera camera, Mesh mesh) {
+    public void render(Graphics2D g2, Camera camera, Mesh mesh, Light light) {
         Matrix4 model = mesh.getModelMatrix();
         Matrix4 view = camera.getViewMatrix();
         Matrix4 projection = camera.getProjectionMatrix((double) getWidth() /getHeight());

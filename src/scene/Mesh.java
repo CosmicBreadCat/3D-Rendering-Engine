@@ -1,3 +1,7 @@
+package scene;
+
+import math.Matrix4;
+
 import java.util.ArrayList;
 
 public class Mesh {
@@ -5,7 +9,7 @@ public class Mesh {
     private double transX = 0, transY = 0, transZ = 0;
     private double scaleX = 1, scaleY = 1, scaleZ = 1;
 
-    ArrayList<Triangle> tris = new ArrayList<>();
+    private ArrayList<Triangle> tris = new ArrayList<>();
 
     public Mesh(ArrayList<Triangle> tris) {
         this.tris = tris;

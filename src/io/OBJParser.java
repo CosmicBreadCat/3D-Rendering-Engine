@@ -1,3 +1,9 @@
+package io;
+
+import math.Vector4;
+import scene.Mesh;
+import scene.Triangle;
+
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,7 +12,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class OBJParser {
-    static Random rand = new Random();
+    private static final Random rand = new Random();
 
     public static Mesh parseFile(String filename){
         ArrayList<Vector4> vertices = new ArrayList<>();

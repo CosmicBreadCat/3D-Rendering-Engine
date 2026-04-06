@@ -1,6 +1,6 @@
+package ui;
+
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class Container extends JFrame{
@@ -8,7 +8,7 @@ public class Container extends JFrame{
     private JPanel contentPanel;
     private JPanel scrollPanel;
     private JScrollPane scrollPane;
-    private final Canvas canvas;
+    private final ui.Canvas canvas;
 
     public Container(Canvas canvas) {
         this.canvas = canvas;

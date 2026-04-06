@@ -1,11 +1,16 @@
-public class Camera {
-    Vector4 location, look, worldUp;
-    double fov, near, far;
+package scene;
 
-    public Camera(Vector4 location, Vector4 look, Vector4 up, double fov, double near, double far) {
+import math.Matrix4;
+import math.Vector4;
+
+public class Camera {
+    private Vector4 location, look, worldUp;
+    private double fov, near, far;
+
+    public Camera(Vector4 location, Vector4 look, Vector4 worldUp, double fov, double near, double far) {
         this.location = location;
         this.look = look;
-        this.worldUp = up;
+        this.worldUp = worldUp;
         this.fov = fov;
         this.near = near;
         this.far = far;

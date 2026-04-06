@@ -1,30 +1,36 @@
+package ui;
+
+import lighting.Light;
+import rendering.SolidRenderer;
+import rendering.WireframeRenderer;
+import scene.Camera;
+import scene.Mesh;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.geom.Path2D;
-import java.awt.image.BufferedImage;
-import java.util.Arrays;
 
 public class Canvas extends JPanel{
     private JPanel canvasPanel;
     private final Mesh mesh;
     private final Camera camera;
+    private final Light light;
     private boolean showWireFrame = false;
     private final SolidRenderer solidRenderer = new SolidRenderer(100,100);
     private final WireframeRenderer wireframeRenderer = new WireframeRenderer(100,100);
 
-    public Canvas(Mesh mesh, Camera camera) {
+    public Canvas(Mesh mesh, Camera camera, Light light) {
         setBackground(Color.GRAY);
 
         this.mesh = mesh;
         this.camera = camera;
+        this.light = light;
 
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 Dimension newSize = e.getComponent().getSize();
-//                System.out.println("New size: " + newSize.width + " x " + newSize.height);
 
                 solidRenderer.resize(newSize.width, newSize.height);
                 wireframeRenderer.resize(newSize.width, newSize.height);
@@ -37,6 +43,11 @@ public class Canvas extends JPanel{
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
+        if (solidRenderer.getWidth() != getWidth() || solidRenderer.getHeight() != getHeight()) {
+            solidRenderer.resize(getWidth(), getHeight());
+            wireframeRenderer.resize(getWidth(), getHeight());
+        }
+
         g2.setColor(Color.black);
         g2.fillRect(0,0,getWidth(), getHeight());
 
@@ -47,9 +58,9 @@ public class Canvas extends JPanel{
         g2.setColor(Color.WHITE);
 
         if (showWireFrame){
-            wireframeRenderer.render(g2, camera, mesh);
+            wireframeRenderer.render(g2, camera, mesh, light);
         }else {
-            solidRenderer.render(g2, camera, mesh);
+            solidRenderer.render(g2, camera, mesh, light);
         }
     }
 

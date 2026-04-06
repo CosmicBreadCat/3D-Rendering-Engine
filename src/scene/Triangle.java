@@ -1,8 +1,12 @@
+package scene;
+
+import math.Vector4;
+
 import java.awt.*;
 
 public class Triangle {
     private Vector4 v1, v2, v3;
-    Color color;
+    private Color color;
 
     public Triangle(Vector4 v1, Vector4 v2, Vector4 v3, Color color) {
         this.v1 = v1;

@@ -1,5 +1,7 @@
+package math;
+
 public class Matrix4 {
-    double[] values = new double[16];
+    private double[] values = new double[16];
 
     public Matrix4() {
         values = new double[]{
