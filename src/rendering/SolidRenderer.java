@@ -1,6 +1,5 @@
 package rendering;
 
-import lighting.DirectionalLight;
 import lighting.Light;
 import math.Matrix4;
 import math.Vector4;
@@ -17,6 +16,7 @@ public class SolidRenderer extends Renderer{
     private final ShadowMapper shadowMapper;
     private boolean shadowsEnabled = true;
     private final double SHADOW_BIAS = 0.005;
+    private final int SHADOW_KERNEL_SIZE = 2;
 
     public SolidRenderer(int width, int height) {
         super(width, height);
@@ -123,21 +123,37 @@ public class SolidRenderer extends Renderer{
                 double depth = v1.getZ()*b[0] + v2.getZ()*b[1] + v3.getZ()*b[2];
                 if (depth < zBuffer[y][x]) {
                     zBuffer[y][x] = depth;
-                    Color color = isInShadow(b, v1Light, v2Light, v3Light, shadowMap) ? ambientColor : shadedColor;
+                    double shadowFactor = getShadowFactor(b, v1Light, v2Light, v3Light, shadowMap);
+                    Color color = blendColors(shadedColor, ambientColor, shadowFactor);
                     img.setRGB(x, y, color.getRGB());
                 }
             }
         }
     }
 
-    private boolean isInShadow(double[] b, Vector4 v1Light, Vector4 v2Light, Vector4 v3Light, double[][] shadowMap) {
+    private double getShadowFactor(double[] b, Vector4 v1Light, Vector4 v2Light, Vector4 v3Light, double[][] shadowMap){
         double lx = v1Light.getX()*b[0] + v2Light.getX()*b[1] + v3Light.getX()*b[2];
         double ly = v1Light.getY()*b[0] + v2Light.getY()*b[1] + v3Light.getY()*b[2];
         double lightDepth = v1Light.getZ()*b[0] + v2Light.getZ()*b[1] + v3Light.getZ()*b[2];
 
-        int x = (int) lx, y = (int) ly;
-        if (x < 0 || x >= shadowMapper.getWidth() || y < 0 || y >= shadowMapper.getHeight()) return false;
-        return lightDepth > shadowMap[y][x] + SHADOW_BIAS;
+        int x = (int) lx, y = (int) ly, count = 0;
+        for (int i = -SHADOW_KERNEL_SIZE; i < SHADOW_KERNEL_SIZE+1; i++) {
+            for (int j = -SHADOW_KERNEL_SIZE; j < SHADOW_KERNEL_SIZE+1; j++) {
+                int ys = y+i, xs = x+j;
+                if (xs < 0 || xs >= shadowMapper.getWidth() || ys < 0 || ys >= shadowMapper.getHeight()) continue;
+                if (lightDepth > shadowMap[ys][xs] + SHADOW_BIAS) count++;
+            }
+        }
+
+        int kernelWidth = SHADOW_KERNEL_SIZE * 2 + 1;
+        return count / (double) (kernelWidth * kernelWidth);
+    }
+
+    private Color blendColors(Color lit, Color shadow, double shadowFactor) {
+        int r = (int)(lit.getRed()   * (1 - shadowFactor) + shadow.getRed()   * shadowFactor);
+        int g = (int)(lit.getGreen() * (1 - shadowFactor) + shadow.getGreen() * shadowFactor);
+        int b = (int)(lit.getBlue()  * (1 - shadowFactor) + shadow.getBlue()  * shadowFactor);
+        return new Color(r, g, b);
     }
 
     private Color flatShading(Vector4 v1, Vector4 v2, Vector4 v3, Color color, Vector4 lightDir){
