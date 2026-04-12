@@ -47,7 +47,11 @@ public class SolidRenderer extends Renderer{
             if (shouldCullTriangle(v1View, v2View, v3View)) continue;
 
             // Calculate simple lighting in view space
-            Color shadedColor = flatShading(v1View, v2View, v3View, tri.getColor(), light.getDirection());
+            Vector4 v1World = model.multiply(tri.getV1());
+            Vector4 v2World = model.multiply(tri.getV2());
+            Vector4 v3World = model.multiply(tri.getV3());
+
+            Color shadedColor = flatShading(v1World, v2World, v3World, tri.getColor(), light.getDirection());
 
             // Transform to clip space
             Vector4 v1 = projection.multiply(v1View);
@@ -159,7 +163,7 @@ public class SolidRenderer extends Renderer{
     private Color flatShading(Vector4 v1, Vector4 v2, Vector4 v3, Color color, Vector4 lightDir){
         Vector4 edge1 = v2.subtract(v1);
         Vector4 edge2 = v3.subtract(v1);
-        Vector4 normal = edge1.cross(edge2).normalize();
+        Vector4 normal = edge2.cross(edge1).normalize();
 
         double diffuse = Math.max(0, normal.dot(lightDir));
         double ambient = 0.2;

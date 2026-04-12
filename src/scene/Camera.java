@@ -19,8 +19,7 @@ public class Camera {
     public Matrix4 getViewMatrix(){
         Matrix4 view = new Matrix4();
 
-        Vector4 forward = location.subtract(look);
-        forward = forward.normalize();
+        Vector4 forward = location.subtract(look).normalize();
         Vector4 right = worldUp.cross(forward).normalize();
         Vector4 up = forward.cross(right);
 
