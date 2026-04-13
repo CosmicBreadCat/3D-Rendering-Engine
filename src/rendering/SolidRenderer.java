@@ -10,6 +10,7 @@ import scene.Triangle;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.List;
 
 public class SolidRenderer extends Renderer{
     private BufferedImage img = null;
@@ -38,6 +39,8 @@ public class SolidRenderer extends Renderer{
         double[][] zBuffer = new double[getHeight()][getWidth()];
         Arrays.stream(zBuffer).forEach(y -> Arrays.fill(y, Double.POSITIVE_INFINITY));
 
+        Vector4 v1Light = null, v2Light = null, v3Light = null;
+        Color ambientColor = null;
         for (Triangle tri : mesh.getTris()) {
             // View space vertices
             Vector4 v1View = MV.multiply(tri.getV1());
@@ -55,38 +58,55 @@ public class SolidRenderer extends Renderer{
 
             // Transform to clip space
             Vector4 v1 = projection.multiply(v1View);
-            v1 = new Vector4(v1.getX()/v1.getW(), v1.getY()/v1.getW(), v1.getZ()/v1.getW(), 1);
             Vector4 v2 = projection.multiply(v2View);
-            v2 = new Vector4(v2.getX()/v2.getW(), v2.getY()/v2.getW(), v2.getZ()/v2.getW(), 1);
             Vector4 v3 = projection.multiply(v3View);
-            v3 = new Vector4(v3.getX()/v3.getW(), v3.getY()/v3.getW(), v3.getZ()/v3.getW(), 1);
 
-            // Convert to screen space
-            v1 = new Vector4(v1.getX() * getWidth()/2 + (double) getWidth()/2, v1.getY() * getHeight()/2 + (double) getHeight()/2, v1.getZ(), 1);
-            v2 = new Vector4(v2.getX() * getWidth()/2 + (double) getWidth()/2, v2.getY() * getHeight()/2 + (double) getHeight()/2, v2.getZ(), 1);
-            v3 = new Vector4(v3.getX() * getWidth()/2 + (double) getWidth()/2, v3.getY() * getHeight()/2 + (double) getHeight()/2, v3.getZ(), 1);
+            // Sutherland-Hodgman clipping
+            List<Triangle> subTriangles = triangulate(clipTriangle(v1, v2, v3), shadedColor);
 
-            if (shadowsEnabled) {
-                double sw = shadowMapper.getWidth(), sh = shadowMapper.getHeight();
+                if (shadowsEnabled) {
+                    double sw = shadowMapper.getWidth(), sh = shadowMapper.getHeight();
 
-                // Light space vertices
-                Vector4 v1Light = lightMVP.multiply(tri.getV1());
-                v1Light = new Vector4(v1Light.getX()/v1Light.getW(), v1Light.getY()/v1Light.getW(), v1Light.getZ()/v1Light.getW(), 1);
-                Vector4 v2Light = lightMVP.multiply(tri.getV2());
-                v2Light = new Vector4(v2Light.getX()/v2Light.getW(), v2Light.getY()/v2Light.getW(), v2Light.getZ()/v2Light.getW(), 1);
-                Vector4 v3Light = lightMVP.multiply(tri.getV3());
-                v3Light = new Vector4(v3Light.getX()/v3Light.getW(), v3Light.getY()/v3Light.getW(), v3Light.getZ()/v3Light.getW(), 1);
+                    // Light space vertices
+                    v1Light = lightMVP.multiply(tri.getV1());
+                    v2Light = lightMVP.multiply(tri.getV2());
+                    v3Light = lightMVP.multiply(tri.getV3());
 
-                v1Light = new Vector4(v1Light.getX() * sw/2 + sw/2, v1Light.getY() * sh/2 + sh/2, v1Light.getZ(), 1);
-                v2Light = new Vector4(v2Light.getX() * sw/2 + sw/2, v2Light.getY() * sh/2 + sh/2, v2Light.getZ(), 1);
-                v3Light = new Vector4(v3Light.getX() * sw/2 + sw/2, v3Light.getY() * sh/2 + sh/2, v3Light.getZ(), 1);
+                    // Perspective divide
+                    v1Light = new Vector4(v1Light.getX() / v1Light.getW(), v1Light.getY() / v1Light.getW(), v1Light.getZ() / v1Light.getW(), 1);
+                    v2Light = new Vector4(v2Light.getX() / v2Light.getW(), v2Light.getY() / v2Light.getW(), v2Light.getZ() / v2Light.getW(), 1);
+                    v3Light = new Vector4(v3Light.getX() / v3Light.getW(), v3Light.getY() / v3Light.getW(), v3Light.getZ() / v3Light.getW(), 1);
 
-                Color ambientColor = applyIntensity(tri.getColor(), 0.2);
-                rasterizeTriangleWithShadow(zBuffer, v1, v2, v3, shadedColor, ambientColor, v1Light, v2Light, v3Light, shadowMap);
-            } else {
-                rasterizeTriangle(zBuffer, v1, v2, v3, shadedColor);
-            }
-        }
+                    // Map onto shadow-map grid coordinates
+                    v1Light = new Vector4(v1Light.getX() * sw / 2 + sw / 2, v1Light.getY() * sh / 2 + sh / 2, v1Light.getZ(), 1);
+                    v2Light = new Vector4(v2Light.getX() * sw / 2 + sw / 2, v2Light.getY() * sh / 2 + sh / 2, v2Light.getZ(), 1);
+                    v3Light = new Vector4(v3Light.getX() * sw / 2 + sw / 2, v3Light.getY() * sh / 2 + sh / 2, v3Light.getZ(), 1);
+                }
+
+
+                    for (Triangle subTri : subTriangles) {
+                        v1 = subTri.getV1();
+                        v2 = subTri.getV2();
+                        v3 = subTri.getV3();
+
+                        // Perspective divide
+                        v1 = new Vector4(v1.getX() / v1.getW(), v1.getY() / v1.getW(), v1.getZ() / v1.getW(), 1);
+                        v2 = new Vector4(v2.getX() / v2.getW(), v2.getY() / v2.getW(), v2.getZ() / v2.getW(), 1);
+                        v3 = new Vector4(v3.getX() / v3.getW(), v3.getY() / v3.getW(), v3.getZ() / v3.getW(), 1);
+
+                        // Convert to screen space
+                        v1 = new Vector4(v1.getX() * getWidth() / 2 + (double) getWidth() / 2, v1.getY() * getHeight() / 2 + (double) getHeight() / 2, v1.getZ(), 1);
+                        v2 = new Vector4(v2.getX() * getWidth() / 2 + (double) getWidth() / 2, v2.getY() * getHeight() / 2 + (double) getHeight() / 2, v2.getZ(), 1);
+                        v3 = new Vector4(v3.getX() * getWidth() / 2 + (double) getWidth() / 2, v3.getY() * getHeight() / 2 + (double) getHeight() / 2, v3.getZ(), 1);
+                        if (shadowsEnabled) {
+                            ambientColor = applyIntensity(tri.getColor(), 0.2);
+                            rasterizeTriangleWithShadow(zBuffer, v1, v2, v3, shadedColor, ambientColor, v1Light, v2Light, v3Light, shadowMap);
+                        } else {
+                            rasterizeTriangle(zBuffer, v1, v2, v3, shadedColor);
+                        }
+                    }
+                }
+
         g2.drawImage(img, 0, 0, null);
     }
 
