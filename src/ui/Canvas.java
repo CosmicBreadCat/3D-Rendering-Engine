@@ -126,9 +126,9 @@ public class Canvas extends JPanel{
 
     private void handleOrbit(int dx, int dy){
         Vector4 offset = camera.getLocation().subtract(camera.getLook());
-        double r     = Math.sqrt(offset.getX()*offset.getX() + offset.getY()*offset.getY() + offset.getZ()*offset.getZ());
+        double r = Math.sqrt(offset.getX()*offset.getX() + offset.getY()*offset.getY() + offset.getZ()*offset.getZ());
         double theta = Math.atan2(offset.getX(), offset.getZ());
-        double phi   = Math.asin(offset.getY() / r);
+        double phi = Math.asin(offset.getY() / r);
 
         double sensitivity = 0.005;
         theta = theta + orbitOrientation * dx * sensitivity;
@@ -143,6 +143,10 @@ public class Canvas extends JPanel{
                 camera.getLook().getY() + newY,
                 camera.getLook().getZ() + newZ, 1
         ));
+
+        System.out.printf("Look: %.2f %.2f %.2f | Loc: %.2f %.2f %.2f%n",
+                camera.getLook().getX(), camera.getLook().getY(), camera.getLook().getZ(),
+                camera.getLocation().getX(), camera.getLocation().getY(), camera.getLocation().getZ());
         repaint();
     }
 

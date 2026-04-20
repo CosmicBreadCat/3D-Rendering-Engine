@@ -31,9 +31,9 @@ public class Camera {
         view.setValue(5, up.getY());
         view.setValue(6, up.getZ());
         view.setValue(7, -up.dot(location));
-        view.setValue(8, -forward.getX());
-        view.setValue(9, -forward.getY());
-        view.setValue(10, -forward.getZ());
+        view.setValue(8,  forward.getX());
+        view.setValue(9,  forward.getY());
+        view.setValue(10, forward.getZ());
         view.setValue(11, -forward.dot(location));
 
         return view;

@@ -22,7 +22,7 @@ public class PipelineUtils {
 
         double dotProd = normal.dot(v1);
 
-        return dotProd < 0;
+        return dotProd > 0;
     }
 
     protected List<Vector4> clipTriangle(Vector4 v1, Vector4 v2, Vector4 v3) {
