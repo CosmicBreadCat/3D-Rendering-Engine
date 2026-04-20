@@ -2,6 +2,7 @@ package ui;
 
 import lighting.Light;
 import math.Vector4;
+import rendering.GridRenderer;
 import rendering.SolidRenderer;
 import rendering.WireframeRenderer;
 import scene.Camera;
@@ -19,6 +20,7 @@ public class Canvas extends JPanel{
     private final Light light;
     private final SolidRenderer solidRenderer = new SolidRenderer(100,100);
     private final WireframeRenderer wireframeRenderer = new WireframeRenderer(100,100);
+    private final GridRenderer gridRenderer = new GridRenderer(100,100);
 
     private boolean showWireFrame = false, isMiddleMouseDown = false;
     private int lastMouseX, lastMouseY, orbitOrientation= 1, zoomSpeed = 1;
@@ -37,6 +39,7 @@ public class Canvas extends JPanel{
 
                 solidRenderer.resize(newSize.width, newSize.height);
                 wireframeRenderer.resize(newSize.width, newSize.height);
+                gridRenderer.resize(newSize.width, newSize.height);
             }
         });
 
@@ -111,12 +114,14 @@ public class Canvas extends JPanel{
         if (solidRenderer.getWidth() != getWidth() || solidRenderer.getHeight() != getHeight()) {
             solidRenderer.resize(getWidth(), getHeight());
             wireframeRenderer.resize(getWidth(), getHeight());
+            gridRenderer.resize(getWidth(), getHeight());
         }
 
         g2.setColor(Color.black);
         g2.fillRect(0,0,getWidth(), getHeight());
 
         renderMesh(g2);
+        gridRenderer.render(g2, camera);
     }
 
     private void handleOrbit(int dx, int dy){

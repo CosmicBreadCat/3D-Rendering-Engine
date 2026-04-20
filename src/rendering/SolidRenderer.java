@@ -16,8 +16,8 @@ public class SolidRenderer extends Renderer{
     private BufferedImage img = null;
     private final ShadowMapper shadowMapper;
     private boolean shadowsEnabled = true;
-    private final double SHADOW_BIAS = 0.005;
-    private final int SHADOW_KERNEL_SIZE = 2;
+    private static final double SHADOW_BIAS = 0.005;
+    private static final int SHADOW_KERNEL_SIZE = 2;
 
     public SolidRenderer(int width, int height) {
         super(width, height);
