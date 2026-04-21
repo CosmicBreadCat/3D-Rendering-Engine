@@ -23,7 +23,7 @@ public class Canvas extends JPanel{
     private final GridRenderer gridRenderer = new GridRenderer(100,100);
 
     private boolean showWireFrame = false, isMiddleMouseDown = false;
-    private int lastMouseX, lastMouseY, orbitOrientation= 1, zoomSpeed = 1;
+    private int lastMouseX, lastMouseY, orbitOrientation= -1, zoomSpeed = 1;
 
     public Canvas(Mesh mesh, Camera camera, Light light) {
         setBackground(Color.GRAY);
@@ -143,10 +143,6 @@ public class Canvas extends JPanel{
                 camera.getLook().getY() + newY,
                 camera.getLook().getZ() + newZ, 1
         ));
-
-        System.out.printf("Look: %.2f %.2f %.2f | Loc: %.2f %.2f %.2f%n",
-                camera.getLook().getX(), camera.getLook().getY(), camera.getLook().getZ(),
-                camera.getLocation().getX(), camera.getLocation().getY(), camera.getLocation().getZ());
         repaint();
     }
 
