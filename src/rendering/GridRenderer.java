@@ -14,55 +14,51 @@ public class GridRenderer extends PipelineUtils {
         super(width, height);
     }
 
-    public void render(Graphics2D g2, Camera camera) {
+    public void render(FrameBuffer frameBuffer, Camera camera) {
         Vector4 look = camera.getLook();
         int snapX = (int) Math.floor(look.getX());
         int snapZ = (int) Math.floor(look.getZ());
 
         Matrix4 VP = camera.getProjectionMatrix((double) width / height).multiply(camera.getViewMatrix());
 
-        g2.setColor(new Color(60, 60, 60));
+        Color gridColor = new Color(60, 60, 60);
         for (int i = -HALF_EXTENT; i <= HALF_EXTENT; i++) {
             float linePos = i * TILE_SIZE;
 
-            // lines parallel to z-axis
-            drawLine(g2, VP,
+            drawLine(frameBuffer, VP,
                     new Vector4(snapX + linePos, 0, snapZ - HALF_EXTENT, 1),
-                    new Vector4(snapX + linePos, 0, snapZ + HALF_EXTENT, 1));
+                    new Vector4(snapX + linePos, 0, snapZ + HALF_EXTENT, 1),
+                    gridColor, 0);
 
-            // lines parallel to x-axis
-            drawLine(g2, VP,
+            drawLine(frameBuffer, VP,
                     new Vector4(snapX - HALF_EXTENT, 0, snapZ + linePos, 1),
-                    new Vector4(snapX + HALF_EXTENT, 0, snapZ + linePos, 1));
+                    new Vector4(snapX + HALF_EXTENT, 0, snapZ + linePos, 1),
+                    gridColor, 0);
         }
 
-        // x-axis (red)
-        g2.setColor(Color.RED);
-        drawLine(g2, VP,
+        drawLine(frameBuffer, VP,
                 new Vector4(-1000, 0, 0, 1),
-                new Vector4( 1000, 0, 0, 1));
+                new Vector4( 1000, 0, 0, 1),
+                Color.RED, -1);
 
-        // z-axis (blue)
-        g2.setColor(Color.BLUE);
-        drawLine(g2, VP,
+        drawLine(frameBuffer, VP,
                 new Vector4(0, 0, -1000, 1),
-                new Vector4(0, 0,  1000, 1));
+                new Vector4(0, 0,  1000, 1),
+                Color.BLUE, -1);
     }
 
-    private void drawLine(Graphics2D g2, Matrix4 VP, Vector4 a, Vector4 b) {
+    private void drawLine(FrameBuffer frameBuffer, Matrix4 VP, Vector4 a, Vector4 b, Color color, double depthBias) {
         Vector4 ca = VP.multiply(a);
         Vector4 cb = VP.multiply(b);
 
-        // signed distance to near plane: z + w >= 0
         double da = ca.getZ() + ca.getW();
         double db = cb.getZ() + cb.getW();
 
         boolean aIn = da >= 0;
         boolean bIn = db >= 0;
 
-        if (!aIn && !bIn) return; // both behind near plane
+        if (!aIn && !bIn) return;
 
-        // clip the outside endpoint to the near plane
         if (!aIn) {
             double t = da / (da - db);
             ca = clipInterpolate(ca, cb, t);
@@ -71,16 +67,26 @@ public class GridRenderer extends PipelineUtils {
             cb = clipInterpolate(ca, cb, t);
         }
 
-        int[] sa = toScreen(ca);
-        int[] sb = toScreen(cb);
-        g2.drawLine(sa[0], sa[1], sb[0], sb[1]);
-    }
+        // Perspective divide
+        double ax = ca.getX() / ca.getW(), ay = ca.getY() / ca.getW(), az = ca.getZ() / ca.getW();
+        double bx = cb.getX() / cb.getW(), by = cb.getY() / cb.getW(), bz = cb.getZ() / cb.getW();
 
-    private int[] toScreen(Vector4 clip) {
-        double ndcX =  clip.getX() / clip.getW();
-        double ndcY =  clip.getY() / clip.getW();
-        int sx = (int)(ndcX * width / 2.0 + width / 2.0);
-        int sy = (int)(ndcY * height / 2.0 + height / 2.0);
-        return new int[]{ sx, sy };
+        // NDC to screen
+        double sx0 = ax * width  / 2.0 + width  / 2.0;
+        double sy0 = ay * height / 2.0 + height / 2.0;
+        double sx1 = bx * width  / 2.0 + width  / 2.0;
+        double sy1 = by * height / 2.0 + height / 2.0;
+
+        int steps = (int) Math.max(Math.abs(sx1 - sx0), Math.abs(sy1 - sy0)) + 1;
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps;
+            int px = (int)(sx0 + t * (sx1 - sx0));
+            int py = (int)(sy0 + t * (sy1 - sy0));
+            double pz = az + t * (bz - az);
+
+            if (px >= 0 && px < width && py >= 0 && py < height) {
+                frameBuffer.setPixel(px, py, pz, color, depthBias);
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ package ui;
 
 import lighting.Light;
 import math.Vector4;
+import rendering.FrameBuffer;
 import rendering.GridRenderer;
 import rendering.SolidRenderer;
 import rendering.WireframeRenderer;
@@ -21,6 +22,7 @@ public class Canvas extends JPanel{
     private final SolidRenderer solidRenderer = new SolidRenderer(100,100);
     private final WireframeRenderer wireframeRenderer = new WireframeRenderer(100,100);
     private final GridRenderer gridRenderer = new GridRenderer(100,100);
+    private FrameBuffer frameBuffer = new FrameBuffer(100, 100);
 
     private boolean showWireFrame = false, isMiddleMouseDown = false;
     private int lastMouseX, lastMouseY, orbitOrientation= -1, zoomSpeed = 1;
@@ -37,6 +39,7 @@ public class Canvas extends JPanel{
             public void componentResized(ComponentEvent e) {
                 Dimension newSize = e.getComponent().getSize();
 
+                frameBuffer.resize(newSize.width,newSize.height);
                 solidRenderer.resize(newSize.width, newSize.height);
                 wireframeRenderer.resize(newSize.width, newSize.height);
                 gridRenderer.resize(newSize.width, newSize.height);
@@ -112,6 +115,7 @@ public class Canvas extends JPanel{
         Graphics2D g2 = (Graphics2D) g;
 
         if (solidRenderer.getWidth() != getWidth() || solidRenderer.getHeight() != getHeight()) {
+            frameBuffer.resize(getWidth(), getHeight());
             solidRenderer.resize(getWidth(), getHeight());
             wireframeRenderer.resize(getWidth(), getHeight());
             gridRenderer.resize(getWidth(), getHeight());
@@ -121,7 +125,6 @@ public class Canvas extends JPanel{
         g2.fillRect(0,0,getWidth(), getHeight());
 
         renderMesh(g2);
-        gridRenderer.render(g2, camera);
     }
 
     private void handleOrbit(int dx, int dy){
@@ -176,13 +179,16 @@ public class Canvas extends JPanel{
     }
 
     public void renderMesh(Graphics2D g2) {
-        g2.setColor(Color.WHITE);
+        gridRenderer.render(frameBuffer, camera);
 
         if (showWireFrame){
-            wireframeRenderer.render(g2, camera, mesh, light);
+            wireframeRenderer.render(camera, mesh, frameBuffer);
         }else {
-            solidRenderer.render(g2, camera, mesh, light);
+            solidRenderer.render(camera, mesh, light, frameBuffer);
         }
+
+        g2.drawImage(frameBuffer.getImg(), 0, 0, null);
+        frameBuffer.clearBuffer();
     }
 
     public double getRotX() {

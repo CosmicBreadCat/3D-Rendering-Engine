@@ -12,21 +12,18 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.List;
 
-public class SolidRenderer extends Renderer{
-    private BufferedImage img = null;
+public class SolidRenderer extends PipelineUtils{
     private final ShadowMapper shadowMapper;
     private boolean shadowsEnabled = true;
     private static final double SHADOW_BIAS = 0.005;
-    private static final int SHADOW_KERNEL_SIZE = 2;
+    private static final int SHADOW_KERNEL_SIZE = 5;
 
     public SolidRenderer(int width, int height) {
         super(width, height);
         shadowMapper = new  ShadowMapper(width, height);
     }
 
-    @Override
-    public void render(Graphics2D g2, Camera camera, Mesh mesh, Light light) {
-        clearImg();
+   public void render( Camera camera, Mesh mesh, Light light, FrameBuffer frameBuffer) {
         Matrix4 model = mesh.getModelMatrix();
         Matrix4 view = camera.getViewMatrix();
         Matrix4 projection = camera.getProjectionMatrix((double) getWidth() /getHeight());
@@ -35,9 +32,6 @@ public class SolidRenderer extends Renderer{
 
         Matrix4 lightMVP = light.getProjectionMatrix().multiply(light.getViewMatrix().multiply(model));
         double[][] shadowMap = shadowMapper.map(mesh, lightMVP);
-
-        double[][] zBuffer = new double[getHeight()][getWidth()];
-        Arrays.stream(zBuffer).forEach(y -> Arrays.fill(y, Double.POSITIVE_INFINITY));
 
         Vector4 v1Light = null, v2Light = null, v3Light = null;
         Color ambientColor = null;
@@ -100,17 +94,17 @@ public class SolidRenderer extends Renderer{
                         v3 = new Vector4(v3.getX() * getWidth() / 2 + (double) getWidth() / 2, v3.getY() * getHeight() / 2 + (double) getHeight() / 2, v3.getZ(), 1);
                         if (shadowsEnabled) {
                             ambientColor = applyIntensity(tri.getColor(), 0.2);
-                            rasterizeTriangleWithShadow(zBuffer, v1, v2, v3, shadedColor, ambientColor, v1Light, v2Light, v3Light, shadowMap);
+                            rasterizeTriangleWithShadow(frameBuffer, v1, v2, v3, shadedColor, ambientColor, v1Light, v2Light, v3Light, shadowMap);
                         } else {
-                            rasterizeTriangle(zBuffer, v1, v2, v3, shadedColor);
+                            rasterizeTriangle(frameBuffer, v1, v2, v3, shadedColor);
                         }
                     }
                 }
 
-        g2.drawImage(img, 0, 0, null);
+
     }
 
-    private void rasterizeTriangle(double[][] zBuffer, Vector4 v1, Vector4 v2, Vector4 v3, Color color) {
+    private void rasterizeTriangle(FrameBuffer frameBuffer, Vector4 v1, Vector4 v2, Vector4 v3, Color color) {
         int minX = Math.max(0, (int) Math.min(Math.min(v1.getX(), v2.getX()), v3.getX()));
         int maxX = Math.min(getWidth() - 1, (int) Math.max(Math.max(v1.getX(), v2.getX()), v3.getX()));
         int minY = Math.max(0, (int) Math.min(Math.min(v1.getY(), v2.getY()), v3.getY()));
@@ -123,15 +117,12 @@ public class SolidRenderer extends Renderer{
 
                 double depth = v1.getZ()*baryCoords[0] + v2.getZ()*baryCoords[1] + v3.getZ()*baryCoords[2];
 
-                if (depth < zBuffer[y][x]){
-                    zBuffer[y][x] = depth;
-                    img.setRGB(x, y, color.getRGB());
-                }
+                frameBuffer.setPixel(x, y, depth, color);
             }
         }
     }
 
-    private void rasterizeTriangleWithShadow(double[][] zBuffer, Vector4 v1, Vector4 v2, Vector4 v3, Color shadedColor, Color ambientColor,
+    private void rasterizeTriangleWithShadow(FrameBuffer frameBuffer, Vector4 v1, Vector4 v2, Vector4 v3, Color shadedColor, Color ambientColor,
                                              Vector4 v1Light, Vector4 v2Light, Vector4 v3Light, double[][] shadowMap) {
 
         int minX = Math.max(0, (int) Math.min(Math.min(v1.getX(), v2.getX()), v3.getX()));
@@ -145,11 +136,11 @@ public class SolidRenderer extends Renderer{
                 if (isNegative(b)) continue;
 
                 double depth = v1.getZ()*b[0] + v2.getZ()*b[1] + v3.getZ()*b[2];
-                if (depth < zBuffer[y][x]) {
-                    zBuffer[y][x] = depth;
+                if (depth < frameBuffer.getZBuffer()[y][x]) {
                     double shadowFactor = getShadowFactor(b, v1Light, v2Light, v3Light, shadowMap);
                     Color color = blendColors(shadedColor, ambientColor, shadowFactor);
-                    img.setRGB(x, y, color.getRGB());
+
+                    frameBuffer.setPixel(x, y, depth, color);
                 }
             }
         }
@@ -190,18 +181,6 @@ public class SolidRenderer extends Renderer{
         double intensity = ambient + (1.0 - ambient) * diffuse;
 
         return applyIntensity(color, intensity);
-    }
-
-    private void clearImg(){
-        if(img == null || img.getWidth() != width || img.getHeight() != height){
-            img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        }else {
-            for (int i = 0; i < img.getWidth(); i++) {
-                for (int j = 0; j < img.getHeight(); j++) {
-                    img.setRGB(i, j, Color.BLACK.getRGB());
-                }
-            }
-        }
     }
 
     private Color applyIntensity(Color color, double intensity) {
