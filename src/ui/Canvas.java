@@ -26,6 +26,9 @@ public class Canvas extends JPanel{
 
     private boolean showWireFrame = false, isMiddleMouseDown = false;
     private int lastMouseX, lastMouseY, orbitOrientation= -1, zoomSpeed = 1;
+    private boolean showFps = true;
+    private long lastFrameTime = System.nanoTime();
+    private double fps = 0;
 
     public Canvas(Mesh mesh, Camera camera, Light light) {
         setBackground(Color.GRAY);
@@ -33,6 +36,8 @@ public class Canvas extends JPanel{
         this.mesh = mesh;
         this.camera = camera;
         this.light = light;
+
+        new javax.swing.Timer(16, e -> repaint()).start();
 
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -114,6 +119,10 @@ public class Canvas extends JPanel{
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
+        long now = System.nanoTime();
+        fps = fps * 0.9 + (1e9 / (now - lastFrameTime)) * 0.1;  // exponential moving average
+        lastFrameTime = now;
+
         if (solidRenderer.getWidth() != getWidth() || solidRenderer.getHeight() != getHeight()) {
             frameBuffer.resize(getWidth(), getHeight());
             solidRenderer.resize(getWidth(), getHeight());
@@ -125,6 +134,12 @@ public class Canvas extends JPanel{
         g2.fillRect(0,0,getWidth(), getHeight());
 
         renderMesh(g2);
+
+        if (showFps) {
+            g2.setColor(Color.GREEN);
+            g2.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+            g2.drawString(String.format("FPS: %.1f", fps), 10, 20);
+        }
     }
 
     private void handleOrbit(int dx, int dy){
@@ -234,4 +249,8 @@ public class Canvas extends JPanel{
     public void setShowWireFrame(boolean showWireFrame) {
         this.showWireFrame = showWireFrame;
     }
+
+    public void setShowFps(boolean showFps) { this.showFps = showFps; }
+
+    public boolean isShowFps() { return showFps; }
 }

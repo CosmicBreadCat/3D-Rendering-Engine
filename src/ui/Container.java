@@ -85,5 +85,15 @@ public class Container extends JFrame{
         });
         wireFramePanel.add(wireFrameButton);
         scrollPanel.add(wireFramePanel);
+
+        JPanel fpsPanel = new JPanel(new GridBagLayout());
+        JButton fpsButton = new JButton("Enable FPS Counter");
+        fpsButton.addActionListener(e -> {
+            canvas.setShowFps(!canvas.isShowFps());
+            canvas.repaint();
+            canvas.revalidate();
+        });
+        fpsPanel.add(fpsButton);
+        scrollPanel.add(fpsPanel);
     }
 }
