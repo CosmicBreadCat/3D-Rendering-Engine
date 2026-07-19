@@ -34,6 +34,7 @@ public class FrameBuffer {
     public void clearBuffer(){
         if(img == null || img.getWidth() != width || img.getHeight() != height){
             img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            zBuffer = new double[height][width];
         }else {
             Graphics2D g2d = img.createGraphics();
             g2d.setComposite(AlphaComposite.Clear);
@@ -42,8 +43,7 @@ public class FrameBuffer {
             g2d.dispose();
         }
 
-        zBuffer = new double[height][width];
-        Arrays.stream(zBuffer).forEach(y -> Arrays.fill(y, Double.POSITIVE_INFINITY));
+        for (double[] row : zBuffer) Arrays.fill(row, Double.POSITIVE_INFINITY);
     }
 
     public int getWidth() {
@@ -58,16 +58,8 @@ public class FrameBuffer {
         return zBuffer;
     }
 
-    public void setZBuffer(double[][] zBuffer) {
-        this.zBuffer = zBuffer;
-    }
-
     public BufferedImage getImg() {
         return img;
-    }
-
-    public void setImg(BufferedImage img) {
-        this.img = img;
     }
 
     public void resize(int width, int height) {

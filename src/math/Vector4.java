@@ -18,7 +18,7 @@ public class Vector4 {
         return new Vector4(cX, cY, cZ, 1);
     }
 
-    public Vector4 scale(Double scale){
+    public Vector4 scale(double scale){
         double sX = x * scale;
         double sY = y * scale;
         double sZ = z * scale;
@@ -27,7 +27,7 @@ public class Vector4 {
     }
 
     public Vector4 normalize(){
-        double mag = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+        double mag = Math.sqrt(x*x + y*y + z*z);
         return new Vector4(x/mag, y/mag, z/mag, 1);
     }
 

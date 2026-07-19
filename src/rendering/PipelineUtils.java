@@ -25,64 +25,55 @@ public class PipelineUtils {
         return dotProd > 0;
     }
 
-    protected List<Vector4> clipTriangle(Vector4 v1, Vector4 v2, Vector4 v3) {
-        List<Vector4> polygon = new ArrayList<>(List.of(v1, v2, v3));
-
+    protected List<Vector4> clipTriangle(List<Vector4> polygon) {
         for (FrustumPlanes plane : FrustumPlanes.values()) {
-            polygon = clipAgainstPlane(polygon, plane);
+            List<Vector4> output = new ArrayList<>();
+            int n = polygon.size();
+            for (int i = 0; i < n; i++) {
+                Vector4 curr = polygon.get(i);
+                Vector4 next = polygon.get((i + 1) % n);
+
+                double dCurr = signedDist(curr, plane);
+                double dNext = signedDist(next, plane);
+
+                if (dCurr >= 0) output.add(curr);
+
+                if ((dCurr >= 0) != (dNext >= 0)) {
+                    double t = dCurr / (dCurr - dNext);
+                    output.add(clipInterpolate(curr, next, t));
+                }
+            }
+            polygon = output;
             if (polygon.isEmpty()) return polygon;
         }
 
         return polygon;
     }
 
-    private List<Vector4> clipAgainstPlane(List<Vector4> vertices, FrustumPlanes plane) {
-        List<Vector4> output = new ArrayList<>();
-        int n = vertices.size();
+    protected List<Vector4> clipTriangleDual(List<Vector4> camPoly, List<Vector4> auxPoly) {
+        for (FrustumPlanes plane : FrustumPlanes.values()) {
+            List<Vector4> camOut = new ArrayList<>(), auxOut = new ArrayList<>();
+            int n = camPoly.size();
+            for (int i = 0; i < n; i++) {
+                Vector4 currCam = camPoly.get(i), nextCam = camPoly.get((i + 1) % n);
+                Vector4 currAux = auxPoly.get(i), nextAux = auxPoly.get((i + 1) % n);
 
-        for (int i = 0; i < n; i++) {
-            Vector4 curr = vertices.get(i);
-            Vector4 next = vertices.get((i + 1) % n);
+                double dCurr = signedDist(currCam, plane);
+                double dNext = signedDist(nextCam, plane);
 
-            double dCurr = signedDist(curr, plane);
-            double dNext = signedDist(next, plane);
+                if (dCurr >= 0) { camOut.add(currCam); auxOut.add(currAux); }
 
-            if (dCurr >= 0) output.add(curr);
-
-            if ((dCurr >= 0) != (dNext >= 0)) {
-                double t = dCurr / (dCurr - dNext);
-                output.add(clipInterpolate(curr, next, t));
+                if ((dCurr >= 0) != (dNext >= 0)) {
+                    double t = dCurr / (dCurr - dNext);
+                    camOut.add(clipInterpolate(currCam, nextCam, t));
+                    auxOut.add(clipInterpolate(currAux, nextAux, t));  // same t, different space
+                }
             }
+            camPoly = camOut;
+            auxPoly.clear(); auxPoly.addAll(auxOut);
+            if (camPoly.isEmpty()) return camPoly;
         }
-
-        return output;
-    }
-
-    private void clipAgainstPlaneWithAttribs(
-            List<Vector4> camVerts, List<Vector4> lightVerts, FrustumPlanes plane,
-            List<Vector4> camOut, List<Vector4> lightOut) {
-
-        int n = camVerts.size();
-        for (int i = 0; i < n; i++) {
-            Vector4 currCam   = camVerts.get(i);
-            Vector4 nextCam   = camVerts.get((i + 1) % n);
-            Vector4 currLight = lightVerts.get(i);
-            Vector4 nextLight = lightVerts.get((i + 1) % n);
-
-            double dCurr = signedDist(currCam, plane);
-            double dNext = signedDist(nextCam, plane);
-
-            if (dCurr >= 0) {
-                camOut.add(currCam);
-                lightOut.add(currLight);
-            }
-
-            if ((dCurr >= 0) != (dNext >= 0)) {
-                double t = dCurr / (dCurr - dNext);
-                camOut.add(clipInterpolate(currCam, nextCam, t));
-                lightOut.add(clipInterpolate(currLight, nextLight, t));
-            }
-        }
+        return camPoly;
     }
 
     private double signedDist(Vector4 v, FrustumPlanes plane) {

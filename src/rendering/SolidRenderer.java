@@ -9,6 +9,7 @@ import scene.Triangle;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,8 +34,6 @@ public class SolidRenderer extends PipelineUtils{
         Matrix4 lightMVP = light.getProjectionMatrix().multiply(light.getViewMatrix().multiply(model));
         double[][] shadowMap = shadowMapper.map(mesh, lightMVP);
 
-        Vector4 v1Light = null, v2Light = null, v3Light = null;
-        Color ambientColor = null;
         for (Triangle tri : mesh.getTris()) {
             // View space vertices
             Vector4 v1View = MV.multiply(tri.getV1());
@@ -56,52 +55,41 @@ public class SolidRenderer extends PipelineUtils{
             Vector4 v3 = projection.multiply(v3View);
 
             // Sutherland-Hodgman clipping
-            List<Triangle> subTriangles = triangulate(clipTriangle(v1, v2, v3), shadedColor);
+            List<Vector4> camPoly = new ArrayList<>(List.of(v1, v2, v3));
 
-                if (shadowsEnabled) {
-                    double sw = shadowMapper.getWidth(), sh = shadowMapper.getHeight();
+            if (shadowsEnabled) {
+                double sw = shadowMapper.getWidth(), sh = shadowMapper.getHeight();
 
-                    // Light space vertices
-                    v1Light = lightMVP.multiply(tri.getV1());
-                    v2Light = lightMVP.multiply(tri.getV2());
-                    v3Light = lightMVP.multiply(tri.getV3());
+                // Light verts in raw clip space — NO persp divide yet, so clipTriangleDual can interpolate them correctly
+                List<Vector4> lightPoly = new ArrayList<>(List.of(
+                        lightMVP.multiply(tri.getV1()),
+                        lightMVP.multiply(tri.getV2()),
+                        lightMVP.multiply(tri.getV3())
+                ));
 
-                    // Perspective divide
-                    v1Light = new Vector4(v1Light.getX() / v1Light.getW(), v1Light.getY() / v1Light.getW(), v1Light.getZ() / v1Light.getW(), 1);
-                    v2Light = new Vector4(v2Light.getX() / v2Light.getW(), v2Light.getY() / v2Light.getW(), v2Light.getZ() / v2Light.getW(), 1);
-                    v3Light = new Vector4(v3Light.getX() / v3Light.getW(), v3Light.getY() / v3Light.getW(), v3Light.getZ() / v3Light.getW(), 1);
+                camPoly = clipTriangleDual(camPoly, lightPoly);
+                Color ambientColor = applyIntensity(tri.getColor(), 0.2);
 
-                    // Map onto shadow-map grid coordinates
-                    v1Light = new Vector4(v1Light.getX() * sw / 2 + sw / 2, v1Light.getY() * sh / 2 + sh / 2, v1Light.getZ(), 1);
-                    v2Light = new Vector4(v2Light.getX() * sw / 2 + sw / 2, v2Light.getY() * sh / 2 + sh / 2, v2Light.getZ(), 1);
-                    v3Light = new Vector4(v3Light.getX() * sw / 2 + sw / 2, v3Light.getY() * sh / 2 + sh / 2, v3Light.getZ(), 1);
+                for (int i = 1; i < camPoly.size() - 1; i++) {
+                    Vector4 cv1 = mapToSpace(perspectiveDivide(camPoly.get(0)),  getWidth(), getHeight());
+                    Vector4 cv2 = mapToSpace(perspectiveDivide(camPoly.get(i)),  getWidth(), getHeight());
+                    Vector4 cv3 = mapToSpace(perspectiveDivide(camPoly.get(i+1)), getWidth(), getHeight());
+
+                    Vector4 lv1 = mapToSpace(perspectiveDivide(lightPoly.get(0)),  sw, sh);
+                    Vector4 lv2 = mapToSpace(perspectiveDivide(lightPoly.get(i)),  sw, sh);
+                    Vector4 lv3 = mapToSpace(perspectiveDivide(lightPoly.get(i+1)), sw, sh);
+
+                    rasterizeTriangleWithShadow(frameBuffer, cv1, cv2, cv3, shadedColor, ambientColor, lv1, lv2, lv3, shadowMap);
                 }
-
-
-                    for (Triangle subTri : subTriangles) {
-                        v1 = subTri.getV1();
-                        v2 = subTri.getV2();
-                        v3 = subTri.getV3();
-
-                        // Perspective divide
-                        v1 = new Vector4(v1.getX() / v1.getW(), v1.getY() / v1.getW(), v1.getZ() / v1.getW(), 1);
-                        v2 = new Vector4(v2.getX() / v2.getW(), v2.getY() / v2.getW(), v2.getZ() / v2.getW(), 1);
-                        v3 = new Vector4(v3.getX() / v3.getW(), v3.getY() / v3.getW(), v3.getZ() / v3.getW(), 1);
-
-                        // Convert to screen space
-                        v1 = new Vector4(v1.getX() * getWidth() / 2 + (double) getWidth() / 2, v1.getY() * getHeight() / 2 + (double) getHeight() / 2, v1.getZ(), 1);
-                        v2 = new Vector4(v2.getX() * getWidth() / 2 + (double) getWidth() / 2, v2.getY() * getHeight() / 2 + (double) getHeight() / 2, v2.getZ(), 1);
-                        v3 = new Vector4(v3.getX() * getWidth() / 2 + (double) getWidth() / 2, v3.getY() * getHeight() / 2 + (double) getHeight() / 2, v3.getZ(), 1);
-                        if (shadowsEnabled) {
-                            ambientColor = applyIntensity(tri.getColor(), 0.2);
-                            rasterizeTriangleWithShadow(frameBuffer, v1, v2, v3, shadedColor, ambientColor, v1Light, v2Light, v3Light, shadowMap);
-                        } else {
-                            rasterizeTriangle(frameBuffer, v1, v2, v3, shadedColor);
-                        }
-                    }
+            } else {
+                for (Triangle subTri : triangulate(clipTriangle(camPoly), shadedColor)) {
+                    v1 = mapToSpace(perspectiveDivide(subTri.getV1()), getWidth(), getHeight());
+                    v2 = mapToSpace(perspectiveDivide(subTri.getV2()), getWidth(), getHeight());
+                    v3 = mapToSpace(perspectiveDivide(subTri.getV3()), getWidth(), getHeight());
+                    rasterizeTriangle(frameBuffer, v1, v2, v3, shadedColor);
                 }
-
-
+            }
+        }
     }
 
     private void rasterizeTriangle(FrameBuffer frameBuffer, Vector4 v1, Vector4 v2, Vector4 v3, Color color) {
@@ -190,6 +178,10 @@ public class SolidRenderer extends PipelineUtils{
                 (int)(color.getBlue() * intensity)
         );
     }
+
+    private Vector4 perspectiveDivide(Vector4 v){return new Vector4(v.getX() / v.getW(), v.getY() / v.getW(), v.getZ() / v.getW(), 1);}
+
+    private Vector4 mapToSpace(Vector4 v, double width, double height){return new Vector4(v.getX() * width / 2 +  width / 2, v.getY() * height / 2 + height / 2, v.getZ(), 1);}
 
     @Override
     public void resize(int width, int height) {

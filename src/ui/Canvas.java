@@ -22,7 +22,7 @@ public class Canvas extends JPanel{
     private final SolidRenderer solidRenderer = new SolidRenderer(100,100);
     private final WireframeRenderer wireframeRenderer = new WireframeRenderer(100,100);
     private final GridRenderer gridRenderer = new GridRenderer(100,100);
-    private FrameBuffer frameBuffer = new FrameBuffer(100, 100);
+    private final FrameBuffer frameBuffer = new FrameBuffer(100, 100);
 
     private boolean showWireFrame = false, isMiddleMouseDown = false;
     private int lastMouseX, lastMouseY, orbitOrientation= -1, zoomSpeed = 1;
@@ -74,7 +74,7 @@ public class Canvas extends JPanel{
 
             @Override
             public void mouseExited(MouseEvent mouseEvent) {
-
+                isMiddleMouseDown = false;
             }
         });
 
